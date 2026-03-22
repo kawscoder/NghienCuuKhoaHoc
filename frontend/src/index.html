@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="vi" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DEFLOG - LLM Log Analyzer</title>
+
+    <!-- Favicon dùng luôn logo.svg -->
+    <link rel="icon" type="image/svg+xml" />
+
+    <!-- Tailwind CDN (tạm dùng cho bản demo / NCKH) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- CSS custom -->
+    <link rel="stylesheet" href="/assets/styles/main.css" />
+  </head>
+
+  <body class="h-full">
+    <div class="wrapper-container w-full h-full flex flex-col overflow-auto">
+      <!-- Header -->
+      <header
+        class="w-full"
+        style="
+          height: 80px;
+          background: #0d1117;
+          border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+        "
+      >
+        <div
+          class="max-w-7xl mx-auto h-full px-6 flex items-center justify-between"
+        >
+          <div class="flex items-center space-x-4">
+            <!-- Logo -->
+            <div class="w-10 h-10">
+              <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                <defs>
+                  <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#3B82F6" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="#2563EB" stop-opacity="1"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Shield -->
+                <path d="M24 4 L8 10 L8 22 Q8 32 24 44 Q40 32 40 22 L40 10 Z"
+                      fill="url(#logoGradient)" stroke="#3B82F6" stroke-width="2"/>
+
+                <!-- Brain circuit -->
+                <circle cx="24" cy="20" r="6" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>
+                <circle cx="24" cy="20" r="2" fill="#FFFFFF"/>
+                <line x1="24" y1="14" x2="24" y2="10" stroke="#FFFFFF" stroke-width="1.5"/>
+                <line x1="30" y1="20" x2="34" y2="20" stroke="#FFFFFF" stroke-width="1.5"/>
+                <line x1="18" y1="20" x2="14" y2="20" stroke="#FFFFFF" stroke-width="1.5"/>
+                <line x1="28" y1="25" x2="30" y2="28" stroke="#FFFFFF" stroke-width="1.5"/>
+                <line x1="20" y1="25" x2="18" y2="28" stroke="#FFFFFF" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <div>
+              <h1
+                id="app-title"
+                class="text-2xl font-bold space-grotesk neon-glow"
+                style="color: #3b82f6"
+              >
+                DEFLOG
+              </h1>
+              <p id="tagline" class="text-xs" style="color: #94a3b8">
+                Intelligent Log Analyzer with LLM
+              </p>
+            </div>
+          </div>
+
+          <!-- menu -->
+          <nav class="flex items-center space-x-6">
+            <button
+              id="nav-dataset"
+              class="text-sm font-medium hover:text-blue-400 transition-colors"
+              style="color: #94a3b8"
+            >
+              Dataset
+            </button>
+            <button
+              id="nav-history"
+              class="text-sm font-medium hover:text-blue-400 transition-colors"
+              style="color: #94a3b8"
+            >
+              History
+            </button>
+            <button
+              id="nav-about"
+              class="text-sm font-medium hover:text-blue-400 transition-colors"
+              style="color: #94a3b8"
+            >
+              About
+            </button>
+
+            <!-- Language Switcher việt/ anh  -->
+            <button
+              id="langSwitcher"
+              class="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-blue-900/30 transition-colors"
+              style="color: #3b82f6"
+            >
+              <span id="langIcon">🇻🇳</span>
+              <span id="langText" class="text-sm font-medium">VI</span>
+            </button>
+
+            <div
+              class="w-10 h-10 rounded-full flex items-center justify-center"
+              style="
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+              "
+            >
+              <span class="text-white font-semibold">AD</span>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="flex-1 w-full overflow-auto">
+        <div id="mainLayout" class="max-w-7xl mx-auto px-6 grid grid-cols-[420px_1fr] gap-6">
+
+            <div id="inputPanel" class="transition-all duration-500">
+              <div class="card-cyber p-6">
+                <!-- Tabs chức ănng -->
+                <div class="flex space-x-2 mb-6">
+                  <button
+                    id="tab-text"
+                    class="tab-active px-4 py-2 rounded-lg font-medium text-sm transition-all"
+                  >
+                    <span id="tab-text-label">📝 Nhập Log</span>
+                  </button>
+                  <button
+                    id="tab-upload"
+                    class="tab-inactive px-4 py-2 rounded-lg font-medium text-sm transition-all"
+                  >
+                    <span id="tab-upload-label">📁 Tải File</span>
+                  </button>
+                  <button
+                    id="tab-screenshot"
+                    class="tab-inactive px-4 py-2 rounded-lg font-medium text-sm transition-all"
+                  >
+                    <span id="tab-screenshot-label">📸 Dán Ảnh</span>
+                  </button>
+                </div>
+
+                <!-- Text Log Tab -->
+                <div id="content-text">
+                  <div
+                    class="upload-zone rounded-lg p-8 text-center mb-4"
+                    id="dropZone"
+                  >
+                    <svg
+                      class="w-16 h-16 mx-auto mb-4"
+                      style="color: #3b82f6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    <p
+                      id="upload-hint"
+                      class="text-lg font-medium mb-2"
+                      style="color: #3b82f6"
+                    >
+                      Kéo &amp; Thả logs vào đây
+                    </p>
+                    <p
+                      id="upload-subtitle"
+                      class="text-sm"
+                      style="color: #94a3b8"
+                    >
+                      hoặc dán dữ liệu log bên dưới
+                    </p>
+                  </div>
+
+                  <textarea
+                    id="logInput"
+                    class="w-full p-4 rounded-lg font-mono text-sm"
+                    style="
+                      height: 400px;
+                      background: #0d1117;
+                      border: 1px solid rgba(59, 130, 246, 0.2);
+                      color: #e6edf3;
+                      resize: vertical;
+                    "
+                    placeholder="Dán logs của bạn vào đây..."
+                  ></textarea>
+
+                  <div class="mt-4 text-xs" style="color: #64748b">
+                    <span id="supported-formats">
+                      💡 Định dạng hỗ trợ: .json, .log, .txt,
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Upload File Tab -->
+                <div id="content-upload" class="hidden">
+                  <div
+                    class="upload-zone rounded-lg p-12 text-center"
+                    id="fileDropZone"
+                  >
+                    <svg
+                      class="w-20 h-20 mx-auto mb-4"
+                      style="color: #3b82f6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <p
+                      id="file-drop-title"
+                      class="text-xl font-medium mb-2"
+                      style="color: #3b82f6"
+                    >
+                      Thả file log của bạn vào đây
+                    </p>
+                    <p
+                      id="file-drop-subtitle"
+                      class="text-sm mb-4"
+                      style="color: #94a3b8"
+                    >
+                      Hỗ trợ: .json, .log, .txt (Tối đa 10MB)
+                    </p>
+                    <input
+                      type="file"
+                      id="fileInput"
+                      class="hidden"
+                      accept=".json,.log,.txt"
+                    />
+                    <button
+                      id="choose-file-btn"
+                      class="btn-primary px-6 py-2 rounded-lg font-medium text-white"
+                    >
+                      Chọn File
+                    </button>
+                    <p
+                      id="fileName"
+                      class="mt-4 text-sm"
+                      style="color: #94a3b8"
+                    ></p>
+                  </div>
+                </div>
+
+                <!-- Screenshot Tab -->
+                <div id="content-screenshot" class="hidden">
+                  <div class="upload-zone rounded-lg p-12 text-center">
+                    <svg
+                      class="w-20 h-20 mx-auto mb-4"
+                      style="color: #3b82f6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <p
+                      id="screenshot-title"
+                      class="text-xl font-medium mb-2"
+                      style="color: #3b82f6"
+                    >
+                      Dán ảnh chụp màn hình từ clipboard
+                    </p>
+                    <p
+                      id="screenshot-subtitle"
+                      class="text-sm mb-4"
+                      style="color: #94a3b8"
+                    >
+                      Nhấn Ctrl+V (hoặc Cmd+V) để dán
+                    </p>
+                    <div id="screenshotPreview" class="mt-4 hidden">
+                      <img
+                        id="screenshotImage"
+                        class="max-w-full rounded-lg border"
+                        style="border-color: rgba(59, 130, 246, 0.3)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button
+                  id="analyzeBtn"
+                  class="w-full mt-6 btn-primary px-6 py-4 rounded-lg font-bold text-lg text-white neon-border"
+                >
+                  <span id="analyze-button-text">
+                    🚀 Phân Tích Ngay với deflog 
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div id="resultPanel" class="transition-all duration-500">
+              <div class="card-cyber p-6">
+                <h2
+                  id="results-title"
+                  class="text-xl font-bold mb-4 space-grotesk"
+                  style="color: #3b82f6"
+                >
+                  📊 Kết Quả Phân Tích
+                </h2>
+
+                <div id="resultsPlaceholder">
+                  <div class="text-center py-12">
+                    <svg
+                      class="w-24 h-24 mx-auto mb-4 opacity-30"
+                      style="color: #3b82f6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                    <p
+                      id="no-analysis-text"
+                      class="text-sm"
+                      style="color: #64748b"
+                    >
+                      Chưa có phân tích. Tải lên hoặc dán logs để bắt đầu.
+                    </p>
+                  </div>
+                </div>
+
+                <div id="resultsContent" class="hidden">
+                  
+                </div>
+
+              </div>
+            </div>
+        </div>
+      </main>
+
+
+      <!-- DATASET PAGE -->
+      <div id="datasetPage" class="hidden">
+        <div class="card-cyber p-6">
+          <h2 class="text-xl font-bold mb-4">Dataset</h2>
+
+          <p class="mb-4">
+            DefLog sử dụng các dataset IDS phổ biến để huấn luyện và đánh giá mô hình phát hiện tấn công.
+          </p>
+
+          <ul class="list-disc ml-6 space-y-2">
+            <li><b>CICIDS2017</b> – dataset phát hiện xâm nhập với nhiều loại tấn công hiện đại</li>
+            <li><b>UNSW-NB15</b> – dataset mạng với 9 nhóm tấn công</li>
+            <li><b>Custom IDS Logs</b> – log IDS thực tế dùng để test hệ thống</li>
+          </ul>
+
+        </div>
+      </div>
+
+
+      <!-- HISTORY PAGE -->
+      <div id="historyPage" class="hidden">
+
+        <div class="card-cyber p-6">
+
+          <h2 class="text-xl font-bold mb-4">Analysis History</h2>
+
+          <div id="historyList"></div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ABOUT PAGE -->
+      <div id="aboutPage" class="hidden">
+
+        <div class="card-cyber p-6">
+
+          <h2 class="text-xl font-bold mb-4">About DefLog</h2>
+
+          <p class="mb-4">
+            DefLog là hệ thống phân tích log IDS sử dụng AI và Large Language Models
+            để phát hiện tấn công, ánh xạ MITRE ATT&CK và tạo playbook xử lý tự động.
+          </p>
+
+          <ul class="list-disc ml-6 space-y-2">
+            <li>Log Parsing</li>
+            <li>Machine Learning Detection</li>
+            <li>MITRE ATT&CK Mapping</li>
+            <li>LLM Reasoning</li>
+            <li>Playbook Generation</li>
+          </ul>
+
+        </div>
+
+      </div>
+      <!-- Footer -->
+      <footer
+        class="w-full py-4 border-t"
+        style="
+          background: #0d1117;
+          border-color: rgba(59, 130, 246, 0.2);
+        "
+      >
+        <div
+          class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-sm"
+          style="color: #64748b"
+        >
+          <p id="footer-text">© DEFLOG SP Nghiên cứu khoa học Đại học Đại Nam</p>
+          <p id="footer-tech" class="mt-2 sm:mt-0">
+            Built with FastAPI + Qwen2.5 + TailwindCSS
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <div id="detailModal"
+      class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50">
+
+      <div
+        class="bg-[#0d1117] rounded-xl border border-blue-800
+              w-[95%] max-w-[1200px]
+              h-[85vh]
+              flex flex-col">
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-center p-4 border-b border-blue-900">
+          <h2 class="text-blue-400 font-bold text-lg">
+            🔬 Chi tiết phân tích
+          </h2>
+          <button onclick="closeDetail()" class="text-red-400">✖</button>
+        </div>
+
+        <!-- CONTENT (SCROLL BÊN TRONG) -->
+        <div id="detailContent"
+          class="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- JS logic -->
+    <script src="/assets/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Env
+venv/
+.env
+
+# Logs
+*.log
+
+# Images
+*.png
+*.jpg
+*.jpeg
+
+# Temp
+temp_*
+
+# Dataset
+dataset/
+
+# OS
+.DS_Store
+Thumbs.db
